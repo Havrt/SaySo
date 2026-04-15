@@ -11,10 +11,17 @@
 </head>
 <body>
     <h1>SaySo Voting System</h1>
-    <input type="text" id="voterId" placeholder="Enter Your Name/ID">
+
+    <div id="registration-div">
+        <input type="text" id="firstName" placeholder="First Name">
+        <input type="text" id="lastName" placeholder="Last Name">
+        <input type="password" id="pin" placeholder="PIN">
+        <br><br>
+        <button onclick="registerVoter()">Register</button>
+    </div>
     <hr>
-    
-    <div id="candidate-list">
+
+    <div id="candidate-list" style="display:none">
         {% for cand in candidates %}
         <div class="card">
             <h3>{{ cand.name }}</h3>
@@ -24,17 +31,41 @@
         {% endfor %}
     </div>
 
-    <button class="undo-btn" onclick="undoVote()">Undo Last Vote</button>
+    <button class="undo-btn" onclick="undoVote()" style="display:none" id="undo-btn">Undo Last Vote</button>
 
     <script>
+        let currentVoterId = null;
+
+        async function registerVoter() {
+            const first = document.getElementById('firstName').value.trim();
+            const last = document.getElementById('lastName').value.trim();
+            const pin = document.getElementById('pin').value;
+
+            if (!first || !last || !pin) return alert("Please fill in all fields.");
+
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({first, last, pin})
+            });
+            const data = await response.json();
+            if (data.success) {
+                currentVoterId = data.voter_id;
+                document.getElementById('registration-div').style.display = 'none';
+                document.getElementById('candidate-list').style.display = 'block';
+                document.getElementById('undo-btn').style.display = 'inline-block';
+            } else {
+                alert(data.message);
+            }
+        }
+
         async function castVote(id) {
-            const voterId = document.getElementById('voterId').value;
-            if (!voterId) return alert("Enter a Voter ID first!");
+            if (!currentVoterId) return alert("Please register first!");
 
             const response = await fetch('/vote', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({voter_id: voterId, candidate_id: id})
+                body: JSON.stringify({voter_id: currentVoterId, candidate_id: id})
             });
             const data = await response.json();
             if (data.success) { updateResults(); } else { alert(data.message); }

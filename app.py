@@ -17,6 +17,29 @@ voters = {}
 # Stack: Stores history of (voter_id, candidate_id) for the Undo feature
 vote_stack = []
 
+# List: Stores registered voter objects
+voter_list = []
+
+# Counter: Used to generate zero-padded voter IDs
+voter_id_counter = [0]
+
+@app.route('/register', methods=['POST'])
+def register():
+    first = request.json.get('first', '').strip()
+    last = request.json.get('last', '').strip()
+    pin = request.json.get('pin', '')
+
+    if pin != 'SS-2026':
+        return jsonify({"success": False, "message": "Invalid PIN."}), 403
+
+    voter_id_counter[0] += 1
+    voter_id = f"{first[0].upper()}{last[0].upper()}-{voter_id_counter[0]:03d}"
+
+    voter_list.append({"id": voter_id, "first": first, "last": last})
+    voters[voter_id] = False
+
+    return jsonify({"success": True, "voter_id": voter_id})
+
 @app.route('/')
 def index():
     return render_template('index.html', candidates=candidates)
