@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SaySo | Online Voting</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f4f4f9; }
+        .card { background: white; margin: 10px auto; padding: 20px; width: 300px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        button { cursor: pointer; padding: 10px; margin: 5px; border: none; border-radius: 4px; background: #673ab7; color: white; }
+        .undo-btn { background: #f44336; }
+    </style>
+</head>
+<body>
+    <h1>SaySo Voting System</h1>
+    <input type="text" id="voterId" placeholder="Enter Your Name/ID">
+    <hr>
+    
+    <div id="candidate-list">
+        {% for cand in candidates %}
+        <div class="card">
+            <h3>{{ cand.name }}</h3>
+            <p>Votes: <span id="votes-{{ cand.id }}">{{ cand.votes }}</span></p>
+            <button onclick="castVote({{ cand.id }})">Vote for {{ cand.name }}</button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <button class="undo-btn" onclick="undoVote()">Undo Last Vote</button>
+
+    <script>
+        async function castVote(id) {
+            const voterId = document.getElementById('voterId').value;
+            if (!voterId) return alert("Enter a Voter ID first!");
+
+            const response = await fetch('/vote', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({voter_id: voterId, candidate_id: id})
+            });
+            const data = await response.json();
+            if (data.success) { updateResults(); } else { alert(data.message); }
+        }
+
+        async function undoVote() {
+            const response = await fetch('/undo', { method: 'POST' });
+            const data = await response.json();
+            if (data.success) { updateResults(); } else { alert(data.message); }
+        }
+
+        async function updateResults() {
+            const response = await fetch('/results');
+            const data = await response.json();
+            data.forEach(cand => {
+                document.getElementById(`votes-${cand.id}`).innerText = cand.votes;
+            });
+        }
+    </script>
+</body>
+</html>
