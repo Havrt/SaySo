@@ -3,45 +3,195 @@
 <head>
     <title>SaySo | Online Voting</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #f4f4f9; }
-        .card { background: white; margin: 10px auto; padding: 20px; width: 300px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        button { cursor: pointer; padding: 10px; margin: 5px; border: none; border-radius: 4px; background: #673ab7; color: white; }
-        .undo-btn { background: #f44336; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #1a1f3c;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+        }
+
+        /* --- Registration Form --- */
+        #registration-div {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            width: 100%;
+            max-width: 380px;
+        }
+
+        #registration-div input {
+            padding: 14px 18px;
+            border-radius: 8px;
+            border: 2px solid #2e3566;
+            background: #252b50;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #registration-div input:focus {
+            border-color: #673ab7;
+        }
+
+        #registration-div input::placeholder {
+            color: #7986cb;
+        }
+
+        #registration-div button {
+            padding: 16px;
+            background: #673ab7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: background 0.2s;
+        }
+
+        #registration-div button:hover {
+            background: #7e57c2;
+        }
+
+        /* --- Feedback --- */
+        #feedback {
+            min-height: 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            margin: 16px 0;
+            letter-spacing: 0.5px;
+        }
+
+        .feedback-success { color: #00c853; }
+        .feedback-error   { color: #f44336; }
+
+        /* --- Candidate Grid --- */
+        #candidate-list {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            width: 100%;
+            max-width: 680px;
+        }
+
+        .tile {
+            padding: 48px 20px;
+            border-radius: 12px;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            transition: transform 0.1s, filter 0.1s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tile:hover {
+            transform: scale(1.03);
+            filter: brightness(1.1);
+        }
+
+        .tile:active {
+            transform: scale(0.97);
+        }
+
+        .tile:nth-child(1) { background: #00c853; }
+        .tile:nth-child(2) { background: #00b0ff; }
+        .tile:nth-child(3) { background: #ff6d00; }
+        .tile:nth-child(4) { background: #e040fb; }
+
+        .vote-count {
+            font-size: 0.95rem;
+            font-weight: 500;
+            opacity: 0.9;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        /* --- Undo Button --- */
+        #undo-btn {
+            display: none;
+            background: #37474f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 36px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 24px;
+            letter-spacing: 1px;
+            transition: background 0.2s;
+        }
+
+        #undo-btn:hover {
+            background: #455a64;
+        }
     </style>
 </head>
 <body>
-    <h1>SaySo Voting System</h1>
+    <h1>SaySo</h1>
 
     <div id="registration-div">
         <input type="text" id="firstName" placeholder="First Name">
         <input type="text" id="lastName" placeholder="Last Name">
         <input type="password" id="pin" placeholder="PIN">
-        <br><br>
-        <button onclick="registerVoter()">Register</button>
+        <button onclick="registerVoter()">Register to Vote</button>
     </div>
-    <hr>
 
-    <div id="candidate-list" style="display:none">
+    <div id="feedback"></div>
+
+    <div id="candidate-list">
         {% for cand in candidates %}
-        <div class="card">
-            <h3>{{ cand.name }}</h3>
-            <p>Votes: <span id="votes-{{ cand.id }}">{{ cand.votes }}</span></p>
-            <button onclick="castVote({{ cand.id }})">Vote for {{ cand.name }}</button>
-        </div>
+        <button class="tile" onclick="castVote({{ cand.id }})">
+            {{ cand.name }}
+            <span class="vote-count">Votes: <span id="votes-{{ cand.id }}">{{ cand.votes }}</span></span>
+        </button>
         {% endfor %}
     </div>
 
-    <button class="undo-btn" onclick="undoVote()" style="display:none" id="undo-btn">Undo Last Vote</button>
+    <button id="undo-btn" onclick="undoVote()">Undo Last Vote</button>
 
     <script>
         let currentVoterId = null;
+
+        function showFeedback(message, type) {
+            const el = document.getElementById('feedback');
+            el.textContent = message;
+            el.className = type === 'success' ? 'feedback-success' : 'feedback-error';
+        }
 
         async function registerVoter() {
             const first = document.getElementById('firstName').value.trim();
             const last = document.getElementById('lastName').value.trim();
             const pin = document.getElementById('pin').value;
 
-            if (!first || !last || !pin) return alert("Please fill in all fields.");
+            if (!first || !last || !pin) return showFeedback("Please fill in all fields.", 'error');
 
             const response = await fetch('/register', {
                 method: 'POST',
@@ -52,15 +202,16 @@
             if (data.success) {
                 currentVoterId = data.voter_id;
                 document.getElementById('registration-div').style.display = 'none';
-                document.getElementById('candidate-list').style.display = 'block';
+                document.getElementById('candidate-list').style.display = 'grid';
                 document.getElementById('undo-btn').style.display = 'inline-block';
+                showFeedback(`Welcome! Your voter ID is ${currentVoterId}`, 'success');
             } else {
-                alert(data.message);
+                showFeedback(data.message, 'error');
             }
         }
 
         async function castVote(id) {
-            if (!currentVoterId) return alert("Please register first!");
+            if (!currentVoterId) return showFeedback("Please register first!", 'error');
 
             const response = await fetch('/vote', {
                 method: 'POST',
@@ -68,13 +219,15 @@
                 body: JSON.stringify({voter_id: currentVoterId, candidate_id: id})
             });
             const data = await response.json();
-            if (data.success) { updateResults(); } else { alert(data.message); }
+            if (data.success) { updateResults(); showFeedback("Vote cast!", 'success'); }
+            else { showFeedback(data.message, 'error'); }
         }
 
         async function undoVote() {
             const response = await fetch('/undo', { method: 'POST' });
             const data = await response.json();
-            if (data.success) { updateResults(); } else { alert(data.message); }
+            if (data.success) { updateResults(); showFeedback(data.message, 'success'); }
+            else { showFeedback(data.message, 'error'); }
         }
 
         async function updateResults() {
