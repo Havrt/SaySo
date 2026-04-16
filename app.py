@@ -58,8 +58,8 @@ def vote():
     for cand in candidates:
         if cand['id'] == candidate_id:
             cand['votes'] += 1
-            voters[voter_id] = True # Mark as voted in Hash Table
-            vote_stack.append((voter_id, candidate_id)) # Push to Stack
+            voters[voter_id] = True  # Mark as voted in Hash Table
+            vote_stack.append((voter_id, candidate_id))  # Push to Stack
             return jsonify({"success": True})
 
     return jsonify({"success": False, "message": "Candidate not found"}), 404
