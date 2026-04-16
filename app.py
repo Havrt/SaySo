@@ -7,7 +7,8 @@ app = Flask(__name__)
 candidates = [
     {"id": 1, "name": "Alice", "votes": 0},
     {"id": 2, "name": "Bob", "votes": 0},
-    {"id": 3, "name": "Charlie", "votes": 0}
+    {"id": 3, "name": "Charlie", "votes": 0},
+    {"id": 4, "name": "John", "votes": 0}
 ]
 
 # Hash Table: Stores voter_id: bool (voted status)
