@@ -152,6 +152,26 @@
         #undo-btn:hover {
             background: #455a64;
         }
+
+        #results-btn {
+            margin-top: 16px;
+            padding: 14px 36px;
+            background: #5c6bc0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            letter-spacing: 1px;
+        }
+
+        #results-output {
+            margin-top: 16px;
+            font-size: 1rem;
+            text-align: center;
+            line-height: 1.8;
+        }
     </style>
 </head>
 <body>
@@ -176,6 +196,8 @@
     </div>
 
     <button id="undo-btn" onclick="undoVote()">Undo Last Vote</button>
+    <button id="results-btn" onclick="showResults()">Show Results</button>
+    <div id="results-output"></div>
 
     <script>
         let currentVoterId = null;
@@ -236,6 +258,18 @@
             data.forEach(cand => {
                 document.getElementById(`votes-${cand.id}`).innerText = cand.votes;
             });
+        }
+
+        async function showResults() {
+            const response = await fetch('/results');
+            const data = await response.json();
+
+            let output = '';
+            data.forEach(cand => {
+                output += `${cand.name}: ${cand.votes} votes<br>`;
+            });
+
+            document.getElementById('results-output').innerHTML = output;
         }
     </script>
 </body>
