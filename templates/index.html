@@ -266,6 +266,35 @@
             background: #f44336;
             color: white;
         }
+
+        /* --- Minimal additions --- */
+        #results-btn {
+            display: none;
+            background: #5c6bc0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 36px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 16px;
+            letter-spacing: 1px;
+        }
+
+        #results-output {
+            margin-top: 16px;
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        #timer {
+            display: none;
+            margin-top: 16px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #ffd54f;
+        }
     </style>
 </head>
 <body>
@@ -320,10 +349,14 @@
     </div>
 
     <button id="undo-btn" onclick="undoVote()">Undo Last Vote</button>
+    <button id="results-btn" onclick="showResults()">Show Results</button>
+    <div id="timer"></div>
+    <div id="results-output"></div>
 
     <script>
         /* ---- HOST SETUP ---- */
         let pendingCandidates = [];
+        let voteTimer;
 
         function addCandidate() {
             const input = document.getElementById('candidate-name-input');
@@ -385,13 +418,32 @@
             }
         });
 
-        /* ---- EXISTING VOTING LOGIC (unchanged) ---- */
+        /* ---- EXISTING VOTING LOGIC ---- */
         let currentVoterId = null;
 
         function showFeedback(message, type) {
             const el = document.getElementById('feedback');
             el.textContent = message;
             el.className = type === 'success' ? 'feedback-success' : 'feedback-error';
+        }
+
+        function startVoteTimer(seconds = 30) {
+            clearInterval(voteTimer);
+            let timeLeft = seconds;
+            const timerEl = document.getElementById('timer');
+            timerEl.style.display = 'block';
+            timerEl.textContent = `Time left to vote: ${timeLeft}s`;
+
+            voteTimer = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = `Time left to vote: ${timeLeft}s`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(voteTimer);
+                    timerEl.textContent = "Voting time expired.";
+                    showFeedback("Voting time expired.", 'error');
+                }
+            }, 1000);
         }
 
         async function registerVoter() {
@@ -412,9 +464,11 @@
                 document.getElementById('registration-div').style.display = 'none';
                 document.getElementById('candidate-list').style.display = 'grid';
                 document.getElementById('undo-btn').style.display = 'inline-block';
+                document.getElementById('results-btn').style.display = 'inline-block';
                 document.getElementById('landing').style.display = 'none';
                 showFeedback(`Welcome! Your voter ID is ${currentVoterId}`, 'success');
                 setInterval(updateResults, 2000);
+                startVoteTimer();
             } else {
                 showFeedback(data.message, 'error');
             }
@@ -422,6 +476,9 @@
 
         async function castVote(id) {
             if (!currentVoterId) return showFeedback("Please register first!", 'error');
+            if (document.getElementById('timer').textContent === "Voting time expired.") {
+                return showFeedback("You can no longer vote.", 'error');
+            }
 
             const response = await fetch('/vote', {
                 method: 'POST',
@@ -429,7 +486,11 @@
                 body: JSON.stringify({voter_id: currentVoterId, candidate_id: id})
             });
             const data = await response.json();
-            if (data.success) { updateResults(); showFeedback("Vote cast!", 'success'); }
+            if (data.success) {
+                clearInterval(voteTimer);
+                updateResults();
+                showFeedback("Vote cast!", 'success');
+            }
             else { showFeedback(data.message, 'error'); }
         }
 
@@ -446,6 +507,18 @@
             data.forEach(cand => {
                 document.getElementById(`votes-${cand.id}`).innerText = cand.votes;
             });
+        }
+
+        async function showResults() {
+            const response = await fetch('/results');
+            const data = await response.json();
+
+            let output = '';
+            data.forEach(cand => {
+                output += `${cand.name}: ${cand.votes} votes<br>`;
+            });
+
+            document.getElementById('results-output').innerHTML = output;
         }
     </script>
 </body>
