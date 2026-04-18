@@ -3,13 +3,11 @@ from flask import Flask, render_template, request, jsonify
 app = Flask(__name__)
 
 # --- DATA STRUCTURES ---
-# Array: Stores candidate objects
-candidates = [
-    {"id": 1, "name": "Alice", "votes": 0},
-    {"id": 2, "name": "Bob", "votes": 0},
-    {"id": 3, "name": "Charlie", "votes": 0},
-    {"id": 4, "name": "John", "votes": 0}
-]
+# Array: Stores candidate objects (populated at session setup)
+candidates = []
+
+# Session PIN set by host at setup
+session_pin = None
 
 # Hash Table: Stores voter_id: bool (voted status)
 # This provides O(1) lookup to prevent double-voting
@@ -24,13 +22,35 @@ voter_list = []
 # Counter: Used to generate zero-padded voter IDs
 voter_id_counter = [0]
 
+@app.route('/status')
+def status():
+    return jsonify({"configured": session_pin is not None, "pin": session_pin})
+
+@app.route('/setup', methods=['POST'])
+def setup():
+    global session_pin, candidates
+    pin = request.json.get('pin', '').strip()
+    names = request.json.get('candidates', [])
+
+    if not pin:
+        return jsonify({"success": False, "message": "PIN is required."}), 400
+    if not names:
+        return jsonify({"success": False, "message": "Add at least one candidate."}), 400
+
+    session_pin = pin
+    candidates = [{"id": i + 1, "name": n.strip(), "votes": 0} for i, n in enumerate(names)]
+
+    return jsonify({"success": True})
+
 @app.route('/register', methods=['POST'])
 def register():
     first = request.json.get('first', '').strip()
     last = request.json.get('last', '').strip()
     pin = request.json.get('pin', '')
 
-    if pin != 'SS-2026':
+    if session_pin is None:
+        return jsonify({"success": False, "message": "Session not started yet."}), 403
+    if pin != session_pin:
         return jsonify({"success": False, "message": "Invalid PIN."}), 403
 
     voter_id_counter[0] += 1
@@ -80,6 +100,17 @@ def undo():
             break
 
     return jsonify({"success": True, "message": f"Vote by {voter_id} undone."})
+
+@app.route('/reset', methods=['POST'])
+def reset():
+    global session_pin, candidates
+    session_pin = None
+    candidates.clear()
+    voters.clear()
+    vote_stack.clear()
+    voter_list.clear()
+    voter_id_counter[0] = 0
+    return jsonify({"success": True})
 
 @app.route('/results')
 def get_results():
