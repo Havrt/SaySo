@@ -1,5 +1,5 @@
-# SaySo
-
+# SaySo 🗳️
+ 
 Is a web voting application built with Flask. SaySo lets a host set up a live voting session with custom candidates, register voters, collect votes, and view real-time results — all from the browser.
  
 ---
@@ -13,12 +13,24 @@ Is a web voting application built with Flask. SaySo lets a host set up a live vo
 - **Live results** — Candidates are returned sorted by vote count in real time
 - **Session reset** — Host can wipe all session data and start fresh
 ---
-
+ 
 ## Tech Stack
  
 - **Backend:** Python, Flask
 - **Frontend:** HTML (Jinja2 templates)
 - **Data structures used:** Array (candidates), Hash Table (voters), Stack (vote history), List (voter registry)
+---
+ 
+## Project Structure
+ 
+```
+SaySo/
+├── app.py          # Flask backend — routes and session logic
+├── templates/
+│   └── index.html  # Frontend UI
+└── README.md
+```
+ 
 ---
  
 ## Getting Started
@@ -40,6 +52,9 @@ pip install flask
 ```bash
 python app.py
 ```
+ 
+Then open your browser and go to `http://127.0.0.1:5000`.
+ 
 ---
  
 ## How It Works
@@ -50,9 +65,4 @@ python app.py
 4. **Undo** — POST to `/undo` to reverse the most recent vote (pops from the vote stack).
 5. **Results** — GET `/results` returns candidates sorted by vote count descending.
 6. **Reset** — POST to `/reset` clears all session data.
-
- 
-Then open your browser and go to `http://127.0.0.1:5000`.
- 
----
  
