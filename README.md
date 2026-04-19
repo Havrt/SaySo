@@ -40,6 +40,17 @@ pip install flask
 ```bash
 python app.py
 ```
+---
+ 
+## How It Works
+ 
+1. **Host setup** — POST to `/setup` with a PIN and a list of candidate names to initialize the session.
+2. **Voter registration** — POST to `/register` with first name, last name, and the session PIN. Returns a unique voter ID.
+3. **Voting** — POST to `/vote` with a voter ID and candidate ID. Validates against the hash table to prevent repeat votes.
+4. **Undo** — POST to `/undo` to reverse the most recent vote (pops from the vote stack).
+5. **Results** — GET `/results` returns candidates sorted by vote count descending.
+6. **Reset** — POST to `/reset` clears all session data.
+
  
 Then open your browser and go to `http://127.0.0.1:5000`.
  
