@@ -1,7 +1,12 @@
 # SaySo 🗳️
  
 Is a web voting application built with Flask. SaySo lets a host set up a live voting session with custom candidates, register voters, collect votes, and view real-time results — all from the browser.
+
+---
  
+## Inspiration
+ 
+This project takes Inspiration from Kahoot.
 ---
  
 ## Features
