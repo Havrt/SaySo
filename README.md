@@ -7,6 +7,7 @@ Is a web voting application built with Flask. SaySo lets a host set up a live vo
 ## Inspiration
  
 This project takes Inspiration from Kahoot.
+
 ---
  
 ## Features
